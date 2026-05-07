@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../config/supabase_config.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glow_button.dart';
 import '../widgets/glass_card.dart';
@@ -48,7 +50,33 @@ class _ContactScreenState extends State<ContactScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
-    await Future.delayed(const Duration(seconds: 1));
+    try {
+      if (SupabaseConfig.isConfigured) {
+        await Supabase.instance.client.from('contacts').insert({
+          'name': _nameCtrl.text.trim(),
+          'email': _emailCtrl.text.trim(),
+          'message': _msgCtrl.text.trim(),
+        });
+      } else {
+        await Future.delayed(const Duration(milliseconds: 700));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _sending = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            'Could not send message. Please try again.',
+            style: AppTheme.labelBold(color: Colors.white),
+          ),
+        ),
+      );
+      return;
+    }
+
     if (!mounted) return;
     setState(() => _sending = false);
     _nameCtrl.clear();

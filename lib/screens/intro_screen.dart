@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -148,6 +149,7 @@ class _IntroScreenState extends State<IntroScreen>
   // ── Rotating 3D logo ─────────────────────────
   Widget _build3DLogo() {
     final isMobile = MediaQuery.of(context).size.shortestSide < 600;
+    final use3DModel = !(kIsWeb && isMobile);
     return AnimatedBuilder(
       animation: Listenable.merge([_scaleCtrl, _glowCtrl]),
       builder: (_, __) {
@@ -185,11 +187,12 @@ class _IntroScreenState extends State<IntroScreen>
                     ),
                   ),
                 ),
-                Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()..setEntry(3, 2, 0.001),
-                  child: _buildLogoModel(isMobile),
-                ),
+                if (use3DModel)
+                  Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()..setEntry(3, 2, 0.001),
+                    child: _buildLogoModel(isMobile),
+                  ),
                 IgnorePointer(
                   child: _buildMtSymbol(),
                 ),
