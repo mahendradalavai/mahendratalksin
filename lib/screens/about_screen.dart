@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glass_card.dart';
@@ -15,6 +16,13 @@ import '../widgets/glass_card.dart';
 /// ─────────────────────────────────────────────
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
+
+  static const String _profileImagePath = 'assets/images/profile.png';
+
+  Future<bool> _hasProfileImage() async {
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    return manifest.listAssets().contains(_profileImagePath);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +43,7 @@ class AboutScreen extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 const SizedBox(height: 24),
-                _buildProfile(),
+                _buildProfile(context),
                 const SizedBox(height: 28),
                 _buildStatsChips(),
                 const SizedBox(height: 32),
@@ -76,7 +84,7 @@ class AboutScreen extends StatelessWidget {
   }
 
   // ── Profile ───────────────────────────────────
-  Widget _buildProfile() {
+  Widget _buildProfile(BuildContext context) {
     return Column(
       children: [
         Stack(
@@ -92,12 +100,24 @@ class AboutScreen extends StatelessWidget {
               child: ClipOval(
                 child: Container(
                   color: AppTheme.surface,
-                  // ── Replace below with real profile image ──
-                  // child: Image.asset('assets/images/profile.png',
-                  //   width: 100, height: 100, fit: BoxFit.cover),
-                  child: Icon(Icons.person,
-                      size: 54,
-                      color: AppTheme.accent.withValues(alpha: 0.6)),
+                  child: FutureBuilder<bool>(
+                    future: _hasProfileImage(),
+                    builder: (_, snap) {
+                      if (snap.data == true) {
+                        return Image.asset(
+                          _profileImagePath,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        );
+                      }
+                      return Icon(
+                        Icons.person,
+                        size: 54,
+                        color: AppTheme.accent.withValues(alpha: 0.6),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -133,7 +153,7 @@ class AboutScreen extends StatelessWidget {
             style: AppTheme.bodyMedium(color: AppTheme.accent, size: 13)),
         const SizedBox(height: 12),
         Text(
-          'Content creator & video editor. I share cinematic reels,\nCapCut tutorials, and AI editing tips.',
+          'Hi, I am Mahendra. I create cinematic reels, share practical\nediting tutorials, and teach simple AI workflows for creators.',
           textAlign: TextAlign.center,
           style: AppTheme.bodyMedium(size: 13),
         ),

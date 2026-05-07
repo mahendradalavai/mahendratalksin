@@ -1,19 +1,16 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 import '../theme/app_theme.dart';
 import 'landing_screen.dart';
 
 /// ─────────────────────────────────────────────
 ///  IntroScreen — 3D Animated Splash
-///  Rotating logo + brand name → LandingScreen
-///
-///  To use a real 3D model, replace _build3DLogo()
-///  with ModelViewer:
-///    import 'package:model_viewer_plus/model_viewer_plus.dart';
-///    ModelViewer(src: 'assets/models/logo.glb',
-///      autoRotate: true, backgroundColor: Colors.transparent)
+///  Uses `assets/models/logo.glb` with ModelViewer
+///  + brand reveal animation -> LandingScreen
 /// ─────────────────────────────────────────────
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -24,7 +21,6 @@ class IntroScreen extends StatefulWidget {
 
 class _IntroScreenState extends State<IntroScreen>
     with TickerProviderStateMixin {
-  late AnimationController _rotateCtrl;
   late AnimationController _scaleCtrl;
   late AnimationController _glowCtrl;
   bool _navigating = false;
@@ -33,16 +29,14 @@ class _IntroScreenState extends State<IntroScreen>
   void initState() {
     super.initState();
 
-    _rotateCtrl = AnimationController(
-      vsync: this, duration: const Duration(seconds: 6),
-    )..repeat();
-
     _scaleCtrl = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 2500),
+      vsync: this,
+      duration: const Duration(milliseconds: 2500),
     )..forward();
 
     _glowCtrl = AnimationController(
-      vsync: this, duration: const Duration(seconds: 2),
+      vsync: this,
+      duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
 
     Future.delayed(const Duration(milliseconds: 3500), _goToLanding);
@@ -50,7 +44,6 @@ class _IntroScreenState extends State<IntroScreen>
 
   @override
   void dispose() {
-    _rotateCtrl.dispose();
     _scaleCtrl.dispose();
     _glowCtrl.dispose();
     super.dispose();
@@ -85,7 +78,8 @@ class _IntroScreenState extends State<IntroScreen>
                   center: Alignment.center,
                   radius: 0.8,
                   colors: [
-                    AppTheme.accent.withValues(alpha: 0.05 + _glowCtrl.value * 0.06),
+                    AppTheme.accent
+                        .withValues(alpha: 0.03 + _glowCtrl.value * 0.03),
                     Colors.transparent,
                   ],
                 ),
@@ -139,7 +133,8 @@ class _IntroScreenState extends State<IntroScreen>
                     color: AppTheme.accent.withValues(alpha: 0.5),
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
               child: Text('Skip  →',
                   style: AppTheme.labelBold(color: AppTheme.accent, size: 13)),
@@ -152,11 +147,12 @@ class _IntroScreenState extends State<IntroScreen>
 
   // ── Rotating 3D logo ─────────────────────────
   Widget _build3DLogo() {
+    final isMobile = MediaQuery.of(context).size.shortestSide < 600;
     return AnimatedBuilder(
-      animation: Listenable.merge([_rotateCtrl, _scaleCtrl, _glowCtrl]),
+      animation: Listenable.merge([_scaleCtrl, _glowCtrl]),
       builder: (_, __) {
         final scale = Curves.elasticOut.transform(_scaleCtrl.value);
-        final glow  = 0.5 + _glowCtrl.value * 0.5;
+        final glow = 0.5 + _glowCtrl.value * 0.5;
         return Transform.scale(
           scale: scale,
           child: Container(
@@ -166,19 +162,38 @@ class _IntroScreenState extends State<IntroScreen>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.accent.withValues(alpha: 0.3 * glow),
-                  blurRadius: 40 * glow,
-                  spreadRadius: 10 * glow,
+                  color: AppTheme.accent.withValues(alpha: 0.16 * glow),
+                  blurRadius: 24 * glow,
+                  spreadRadius: 3 * glow,
                 ),
               ],
             ),
-            child: Transform(
+            child: Stack(
               alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001)
-                ..rotateY(_rotateCtrl.value * 2 * math.pi)
-                ..rotateX(math.pi / 12),
-              child: _buildLogoFace(),
+              children: [
+                Container(
+                  width: 130,
+                  height: 130,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const RadialGradient(
+                      colors: [Color(0xFF202020), Color(0xFF090909)],
+                    ),
+                    border: Border.all(
+                      color: AppTheme.accent.withValues(alpha: 0.5),
+                      width: 1.2,
+                    ),
+                  ),
+                ),
+                Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.identity()..setEntry(3, 2, 0.001),
+                  child: _buildLogoModel(isMobile),
+                ),
+                IgnorePointer(
+                  child: _buildMtSymbol(),
+                ),
+              ],
             ),
           ),
         );
@@ -186,50 +201,37 @@ class _IntroScreenState extends State<IntroScreen>
     );
   }
 
-  Widget _buildLogoFace() {
-    return Container(
+  Widget _buildMtSymbol() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'MT',
+          style: GoogleFonts.bebasNeue(
+            fontSize: 34,
+            color: AppTheme.accent.withValues(alpha: 0.95),
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(width: 6),
+        const Icon(Icons.verified_rounded, color: Color(0xFF1DA1F2), size: 18),
+      ],
+    );
+  }
+
+  Widget _buildLogoModel(bool isMobile) {
+    return SizedBox(
       width: 140,
       height: 140,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const RadialGradient(
-          colors: [Color(0xFF2C2100), Color(0xFF0F0F0F)],
-        ),
-        border: Border.all(color: AppTheme.accent, width: 2.5),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 110, height: 110,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppTheme.accent.withValues(alpha: 0.3),
-                width: 1,
-              ),
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('MT',
-                  style: GoogleFonts.bebasNeue(
-                      fontSize: 52,
-                      color: AppTheme.accent,
-                      letterSpacing: 2,
-                      height: 1)),
-              Container(width: 50, height: 1.5, color: AppTheme.accent),
-              const SizedBox(height: 3),
-              Text('TALKS',
-                  style: GoogleFonts.poppins(
-                      fontSize: 9,
-                      color: AppTheme.accent.withValues(alpha: 0.7),
-                      letterSpacing: 3,
-                      fontWeight: FontWeight.w600)),
-            ],
-          ),
-        ],
+      child: ModelViewer(
+        src: 'assets/models/logo.glb',
+        alt: 'Mahendra Talks logo model',
+        autoRotate: true,
+        autoPlay: true,
+        disableZoom: isMobile,
+        cameraControls: !isMobile,
+        interactionPrompt: InteractionPrompt.none,
+        backgroundColor: Colors.transparent,
       ),
     );
   }
@@ -241,7 +243,8 @@ class _IntroScreenState extends State<IntroScreen>
       children: List.generate(3, (i) {
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: 6, height: 6,
+          width: 6,
+          height: 6,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppTheme.accent.withValues(alpha: 0.6),
@@ -259,15 +262,16 @@ class _IntroScreenState extends State<IntroScreen>
   List<Widget> _buildParticles(Size size) {
     final rng = math.Random(42);
     return List.generate(18, (i) {
-      final x     = rng.nextDouble();
-      final y     = rng.nextDouble();
-      final sz    = 2.0 + rng.nextDouble() * 3;
+      final x = rng.nextDouble();
+      final y = rng.nextDouble();
+      final sz = 2.0 + rng.nextDouble() * 3;
       final delay = rng.nextInt(2000);
       return Positioned(
         left: size.width * x,
-        top:  size.height * y,
+        top: size.height * y,
         child: Container(
-          width: sz, height: sz,
+          width: sz,
+          height: sz,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppTheme.accent.withValues(alpha: 0.4),

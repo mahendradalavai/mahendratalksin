@@ -39,7 +39,7 @@ class _ContactScreenState extends State<ContactScreen> {
   Future<void> _launchEmail() async {
     final uri = Uri(
       scheme: 'mailto',
-      path: 'hello@mahendratalks.com',
+      path: 'mahendradalavai7@gmail.com',
       query: 'subject=Collaboration Inquiry',
     );
     if (await canLaunchUrl(uri)) await launchUrl(uri);
@@ -101,7 +101,7 @@ class _ContactScreenState extends State<ContactScreen> {
 
                 // Email CTA
                 GlowButton(
-                  label: 'hello@mahendratalks.com',
+                  label: 'mahendradalavai7@gmail.com',
                   icon: Icons.mail_rounded,
                   onPressed: _launchEmail,
                   width: double.infinity,
@@ -144,25 +144,19 @@ class _ContactScreenState extends State<ContactScreen> {
           children: [
             SocialIcon(
               icon: FontAwesomeIcons.instagram,
-              url: 'https://instagram.com/mahendratalks.in',
+              url: 'https://www.instagram.com/mahendratalks.in?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==',
               label: 'Instagram',
               color: const Color(0xFFE1306C),
             ),
             SocialIcon(
-              icon: FontAwesomeIcons.youtube,
-              url: 'https://youtube.com/@mahendratalks',
-              label: 'YouTube',
-              color: const Color(0xFFFF0000),
-            ),
-            SocialIcon(
-              icon: FontAwesomeIcons.telegram,
-              url: 'https://t.me/mahendratalks',
-              label: 'Telegram',
-              color: const Color(0xFF0088CC),
+              icon: FontAwesomeIcons.envelope,
+              url: 'mailto:mahendradalavai7@gmail.com?subject=Collaboration%20Inquiry',
+              label: 'Email',
+              color: const Color(0xFFFFC107),
             ),
             SocialIcon(
               icon: FontAwesomeIcons.whatsapp,
-              url: 'https://wa.me/918000000000', // ← Replace number
+              url: 'https://wa.me/918185012513',
               label: 'WhatsApp',
               color: const Color(0xFF25D366),
             ),

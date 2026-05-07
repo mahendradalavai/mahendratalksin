@@ -2,24 +2,15 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:model_viewer_plus/model_viewer_plus.dart';
 import '../theme/app_theme.dart';
 import '../widgets/glow_button.dart';
 import 'home_shell.dart';
 
 /// ─────────────────────────────────────────────
 ///  LandingScreen — 3D Hero / Welcome
-///
-///  To use a real 3D phone model, replace the
-///  _buildPhoneShape() section inside
-///  _buildPhoneModel() with:
-///
-///    import 'package:model_viewer_plus/model_viewer_plus.dart';
-///    ModelViewer(
-///      src: 'assets/models/phone.glb',
-///      autoRotate: true,
-///      cameraControls: true,
-///      backgroundColor: Colors.transparent,
-///    )
+///  Uses `assets/models/phone.glb` on large screens
+///  and `assets/models/phone_mobile.glb` on mobile
 /// ─────────────────────────────────────────────
 class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
@@ -38,15 +29,18 @@ class _LandingScreenState extends State<LandingScreen>
   void initState() {
     super.initState();
     _floatCtrl = AnimationController(
-      vsync: this, duration: const Duration(seconds: 3),
+      vsync: this,
+      duration: const Duration(seconds: 3),
     )..repeat(reverse: true);
 
     _rotateCtrl = AnimationController(
-      vsync: this, duration: const Duration(seconds: 8),
+      vsync: this,
+      duration: const Duration(seconds: 8),
     )..repeat();
 
     _glowCtrl = AnimationController(
-      vsync: this, duration: const Duration(seconds: 2),
+      vsync: this,
+      duration: const Duration(seconds: 2),
     )..repeat(reverse: true);
   }
 
@@ -67,7 +61,8 @@ class _LandingScreenState extends State<LandingScreen>
           opacity: anim,
           child: SlideTransition(
             position: Tween<Offset>(
-              begin: const Offset(0, 0.04), end: Offset.zero,
+              begin: const Offset(0, 0.04),
+              end: Offset.zero,
             ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
             child: child,
           ),
@@ -153,10 +148,13 @@ class _LandingScreenState extends State<LandingScreen>
   // ── 3D Phone model placeholder ────────────────
   Widget _buildPhoneModel(Size size) {
     final phoneH = size.height * 0.38;
+    final isMobile = size.shortestSide < 600;
+    final modelSrc =
+        isMobile ? 'assets/models/phone_mobile.glb' : 'assets/models/phone.glb';
     return AnimatedBuilder(
       animation: Listenable.merge([_floatCtrl, _rotateCtrl, _glowCtrl]),
       builder: (_, __) {
-        final floatOffset  = math.sin(_floatCtrl.value * math.pi) * 10;
+        final floatOffset = math.sin(_floatCtrl.value * math.pi) * 10;
         final glowIntensity = 0.4 + _glowCtrl.value * 0.4;
         return Transform.translate(
           offset: Offset(0, floatOffset),
@@ -168,7 +166,8 @@ class _LandingScreenState extends State<LandingScreen>
               children: [
                 // Glow behind phone
                 Container(
-                  width: 180, height: 180,
+                  width: 180,
+                  height: 180,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
@@ -186,7 +185,21 @@ class _LandingScreenState extends State<LandingScreen>
                     ..setEntry(3, 2, 0.001)
                     ..rotateY(
                         _rotateCtrl.value * 2 * math.pi * 0.3 - math.pi / 8),
-                  child: _buildPhoneShape(phoneH * 0.85),
+                  child: SizedBox(
+                    width: phoneH * 0.8,
+                    height: phoneH * 0.9,
+                    child: ModelViewer(
+                      src: modelSrc,
+                      alt: 'Portfolio hero 3D model',
+                      autoRotate: true,
+                      autoRotateDelay: isMobile ? 800 : 300,
+                      autoPlay: true,
+                      disableZoom: isMobile,
+                      cameraControls: !isMobile,
+                      interactionPrompt: InteractionPrompt.none,
+                      backgroundColor: Colors.transparent,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -197,80 +210,6 @@ class _LandingScreenState extends State<LandingScreen>
         .animate()
         .fadeIn(delay: 300.ms, duration: 800.ms)
         .scale(begin: const Offset(0.8, 0.8), end: const Offset(1, 1));
-  }
-
-  Widget _buildPhoneShape(double height) {
-    final width = height * 0.48;
-    return Container(
-      width: width, height: height,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft, end: Alignment.bottomRight,
-          colors: [Color(0xFF2C2C2C), Color(0xFF111111)],
-        ),
-        border: Border.all(
-            color: AppTheme.accent.withValues(alpha: 0.5), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.accent.withValues(alpha: 0.2),
-            blurRadius: 30, spreadRadius: 4,
-          ),
-          const BoxShadow(
-            color: Colors.black54,
-            blurRadius: 20, offset: Offset(8, 16),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 14),
-          Container(
-            width: 60, height: 6,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                  colors: [
-                    AppTheme.accent.withValues(alpha: 0.08),
-                    Colors.black,
-                  ],
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.play_circle_fill,
-                      color: AppTheme.accent, size: 36),
-                  const SizedBox(height: 8),
-                  Text('Reels',
-                      style: AppTheme.labelBold(
-                          color: AppTheme.accent, size: 11)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(
-              color: AppTheme.accent.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-      ),
-    );
   }
 
   // ── Headline ──────────────────────────────────
@@ -307,8 +246,8 @@ class _LandingScreenState extends State<LandingScreen>
   Widget _buildStats() {
     final stats = [
       {'label': 'Followers', 'value': '1K+'},
-      {'label': 'Reels',     'value': '12'},
-      {'label': 'Country',   'value': '🇮🇳'},
+      {'label': 'Reels', 'value': '12'},
+      {'label': 'Country', 'value': '🇮🇳'},
     ];
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -319,7 +258,8 @@ class _LandingScreenState extends State<LandingScreen>
           children: [
             if (i != 0)
               Container(
-                width: 1, height: 32,
+                width: 1,
+                height: 32,
                 color: AppTheme.border,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
@@ -327,31 +267,32 @@ class _LandingScreenState extends State<LandingScreen>
               children: [
                 Text(s['value']!,
                     style: GoogleFonts.bebasNeue(
-                        fontSize: 26, color: AppTheme.accent, letterSpacing: 1)),
+                        fontSize: 26,
+                        color: AppTheme.accent,
+                        letterSpacing: 1)),
                 Text(s['label']!, style: AppTheme.bodyMedium(size: 11)),
               ],
             ),
           ],
         );
       }).toList(),
-    )
-        .animate()
-        .fadeIn(delay: 900.ms, duration: 600.ms)
-        .slideY(begin: 0.2);
+    ).animate().fadeIn(delay: 900.ms, duration: 600.ms).slideY(begin: 0.2);
   }
 
   // ── Particles ─────────────────────────────────
   List<Widget> _buildParticles(Size size) {
     final rng = math.Random(7);
     return List.generate(20, (i) {
-      final x     = rng.nextDouble() * size.width;
-      final y     = rng.nextDouble() * size.height;
-      final sz    = 1.5 + rng.nextDouble() * 3;
+      final x = rng.nextDouble() * size.width;
+      final y = rng.nextDouble() * size.height;
+      final sz = 1.5 + rng.nextDouble() * 3;
       final delay = rng.nextInt(3000);
       return Positioned(
-        left: x, top: y,
+        left: x,
+        top: y,
         child: Container(
-          width: sz, height: sz,
+          width: sz,
+          height: sz,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppTheme.accent.withValues(alpha: 0.35),
